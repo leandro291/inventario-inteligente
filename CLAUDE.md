@@ -8,14 +8,14 @@ Esqueleto inicial: sin commits, sin README, sin tests, sin linter configurado. `
 
 ## Stack
 
-FastAPI (+ pydantic v2, pydantic-settings, python-dotenv), uvicorn. ORM: SQLAlchemy 2.0 (estilo 2.0: `DeclarativeBase`, `Mapped[]`/`mapped_column`, `select()`), todavía no está en `requirements.txt` ni hay driver de DB; agregarlos al implementar `db.py`. Las dependencias están fijadas en `requirements.txt` (salida de `pip freeze`, incluye extras como opentelemetry/sentry-sdk que el código aún no usa).
+FastAPI (+ pydantic v2, pydantic-settings, python-dotenv), uvicorn. ORM: SQLAlchemy 2.0 (estilo 2.0: `DeclarativeBase`, `Mapped[]`/`mapped_column`, `select()`), en `requirements.txt` (v2.0.54); DB: Postgres (Neon) vía `DATABASE_URL` en `.env`, driver psycopg2-binary. Las dependencias están fijadas en `requirements.txt` (salida de `pip freeze`, incluye extras como opentelemetry/sentry-sdk que el código aún no usa).
 
 ## Comandos
 
 ```bash
 source venv/bin/activate          # venv local, ignorado por git
 pip install -r requirements.txt
-fastapi dev main.py               # servidor de desarrollo (fastapi-cli instalado); requiere que main.py defina `app`
+fastapi dev main.py               # servidor de desarrollo (fastapi-cli instalado); o `uvicorn main:app --reload`
 ```
 
 Config sensible va en `.env` (ignorado por git).
@@ -31,3 +31,9 @@ Layout por capas, a partir de los nombres de carpetas:
 - `app/schema/` — modelos pydantic (request/response)
 - `app/models/` — modelos de persistencia
 - `app/services/` — lógica de negocio
+
+## Modelo de datos
+
+Ejemplo para practicar (categorías y productos). Fuente de verdad del ERM:
+
+@ERM.md
