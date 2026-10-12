@@ -21,7 +21,7 @@ uvicorn main:app --reload   # o: fastapi dev main.py
 
 Docs interactivas: http://127.0.0.1:8000/docs
 
-Al arrancar, `Base.metadata.create_all` crea las tablas si no existen. No migra tablas ya creadas (si cambian las columnas habría que usar Alembic).
+El esquema se maneja con Alembic (ver [Migraciones](#migraciones)); la app ya no crea tablas al arrancar. En una base nueva: `alembic upgrade head`.
 
 ## Variables de entorno
 
@@ -32,7 +32,7 @@ Al arrancar, `Base.metadata.create_all` crea las tablas si no existen. No migra 
 ## Estructura
 
 ```
-main.py            # instancia FastAPI, registra routers, create_all
+main.py            # instancia FastAPI y registro de routers
 db.py              # engine, session_local, Base, get_db
 dependencies.py    # db_dependency (Annotated[Session, Depends(get_db)])
 app/
@@ -40,6 +40,8 @@ app/
   schema/          # modelos Pydantic (Base / Create / Update / Out)
   services/        # lógica de acceso a datos (CategoryService, ProductService)
   routers/         # endpoints
+migrations/        # Alembic (versions/ = historial de cambios del esquema)
+alembic.ini
 ```
 
 Flujo de una request: `router` → `service` (recibe la `Session`) → `model`; la respuesta se serializa con el schema `Out`.
@@ -65,8 +67,20 @@ Mismos cinco endpoints para `/categories` y `/products`:
 - Category: `nombre` 3–100 caracteres.
 - Product: `nombre` 3–100, `precio` > 0, `stock` ≥ 0, `category_id` > 0.
 
-## Pendiente / limitaciones conocidas
+## Migraciones
 
-- Borrar una categoría con productos falla por la FK (500); falta chequeo o `ondelete`.
-- `POST /products` con un `category_id` inexistente también falla por la FK.
-- Sin `relationship()` entre modelos, sin tests, sin migraciones.
+Alembic lee la URL desde `db.py` (`.env`), no desde `alembic.ini`.
+
+```bash
+alembic revision --autogenerate -m "descripción"   # tras cambiar un modelo; revisar el archivo generado
+alembic upgrade head                                # aplicar
+alembic downgrade -1                                # deshacer el último
+alembic current                                     # revisión actual de la base
+```
+
+Autogenerate no detecta renombres de columna: revisar siempre el archivo antes de aplicar.
+
+## Pendiente
+
+- Borrar una categoría con productos, o crear/actualizar un producto con `category_id` inexistente, falla por la FK (500).
+- Sin `relationship()` entre modelos y sin tests.

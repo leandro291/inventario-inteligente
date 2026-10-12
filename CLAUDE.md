@@ -18,13 +18,15 @@ pip install -r requirements.txt
 fastapi dev main.py               # servidor de desarrollo (fastapi-cli instalado); o `uvicorn main:app --reload`
 ```
 
+Migraciones (Alembic, config en `migrations/env.py`, URL desde `db.py`): `alembic revision --autogenerate -m "msg"` y `alembic upgrade head`. La app no llama `create_all`; todo cambio de esquema pasa por una migración.
+
 Config sensible va en `.env` (ignorado por git).
 
 ## Estructura prevista
 
 Layout por capas, a partir de los nombres de carpetas:
 
-- `main.py` — instancia `FastAPI` y registra routers
+- `main.py` — instancia `FastAPI` y registra routers (no crea tablas: eso es Alembic)
 - `db.py` — conexión/sesión de base de datos
 - `dependencies.py` — dependencias compartidas de FastAPI (`Depends`)
 - `app/routers/` — endpoints
