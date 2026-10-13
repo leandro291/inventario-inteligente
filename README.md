@@ -21,7 +21,7 @@ uvicorn main:app --reload   # o: fastapi dev main.py
 
 Docs interactivas: http://127.0.0.1:8000/docs
 
-El esquema se maneja con Alembic (ver [Migraciones](#migraciones)); la app ya no crea tablas al arrancar. En una base nueva: `alembic upgrade head`.
+Al arrancar, `main.py` crea las tablas que faltan con `Base.metadata.create_all`. Los cambios sobre tablas existentes (columnas, constraints) van por Alembic (ver [Migraciones](#migraciones)).
 
 ## Variables de entorno
 

@@ -12,7 +12,7 @@ alembic revision --autogenerate -m "msg"
 alembic upgrade head
 ```
 
-Todo cambio de esquema pasa por una migración Alembic (config en `migrations/env.py`, URL desde `db.py`). Config sensible solo en `.env`.
+`main.py` crea las tablas que faltan con `create_all` al arrancar; todo cambio sobre tablas existentes pasa por una migración Alembic (config en `migrations/env.py`, URL desde `db.py`). Config sensible solo en `.env`.
 
 ## Estructura
 
