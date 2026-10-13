@@ -1,6 +1,6 @@
 # ERM
 
-Modelo de datos de Inventario Inteligente: una categoría tiene muchos productos. Refleja lo que necesita la UI (canvas https://claude.ai/artifact/1A69kPKbtKFKHH1BHSC2Zr). El mismo esquema corre en local y en Neon, aplicado con Alembic.
+Modelo de datos de Inventario Inteligente: una categoría tiene muchos productos. Refleja lo que necesita la UI (canvas https://claude.ai/artifact/1A69kPKbtKFKHH1BHSC2Zr). Las tablas se crearon con `Base.metadata.create_all` (se ejecuta al iniciar `main.py`); la migración Alembic inicial (`426c9828f0c0`) es un baseline vacío (`upgrade(): pass`). Los cambios de esquema futuros, incluidos los constraints pendientes, van por migraciones Alembic.
 
 ```mermaid
 erDiagram
@@ -20,7 +20,7 @@ erDiagram
     }
 ```
 
-Los constraints marcados **pendiente** todavía no existen en la base: requieren una migración Alembic.
+Los constraints marcados **pendiente** todavía no existen en la base: requieren una migración Alembic (ver Pendientes).
 
 ## Tablas
 
@@ -74,5 +74,5 @@ Se calculan en consulta o en el front; no se guardan.
 
 ## Pendientes
 
-- Migración Alembic con `UNIQUE (categories.nombre)`, `CHECK (precio >= 0)` y `CHECK (stock >= 0)`.
+- Primera migración Alembic real, escrita a mano contra las tablas ya existentes (el baseline está vacío): `UNIQUE (categories.nombre)`, `CHECK (precio >= 0)` y `CHECK (stock >= 0)`.
 - `Product.precio` está tipado `Mapped[float]` sobre `DECIMAL`; debería ser `Mapped[Decimal]`.
