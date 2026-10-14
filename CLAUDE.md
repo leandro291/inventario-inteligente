@@ -10,6 +10,8 @@ pip install -r requirements.txt
 fastapi dev main.py
 alembic revision --autogenerate -m "msg"
 alembic upgrade head
+pip install -r requirements-dev.txt   # pytest
+pytest                                # tests offline (agente y LLM falsos)
 ```
 
 `main.py` crea las tablas que faltan con `create_all` al arrancar; todo cambio sobre tablas existentes pasa por una migración Alembic (config en `migrations/env.py`, URL desde `db.py`). Config sensible solo en `.env`.

@@ -21,6 +21,15 @@ uvicorn main:app --reload   # o: fastapi dev main.py
 
 Docs interactivas: http://127.0.0.1:8000/docs
 
+### Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+Los tests no usan red: reemplazan el agente y el LLM por fakes y no tocan la base.
+
 Al arrancar, `main.py` crea las tablas que faltan con `Base.metadata.create_all`. Los cambios sobre tablas existentes (columnas, constraints) van por Alembic (ver [Migraciones](#migraciones)).
 
 ## Variables de entorno
@@ -62,6 +71,14 @@ Mismos cinco endpoints para `/categories` y `/products`:
 | PATCH  | `/{id}`  | Actualizar parcial | 200 / 404 |
 | DELETE | `/{id}`  | Borrar (físico)    | 204 / 404 |
 
+### Chat IA
+
+- `POST /ai/preguntar` — body `{pregunta: 3–500, thread_id: 1–100 (obligatorio), contexto?: ≤300}` → `{respuesta, sugerencias: string[]}`. `502` si falla el agente.
+- `POST /ai/preguntar/stream` — mismo body; responde `text/event-stream` con eventos `token` (`{texto}`), `sugerencias` (`{sugerencias}`), `fin` (`{}`) o `error` (`{detalle}`).
+- `DELETE /ai/conversaciones/{thread_id}` — `204`; borra la memoria de esa conversación (idempotente).
+
+La memoria vive en RAM (`InMemorySaver`): se pierde al reiniciar el servidor. Las conversaciones largas se resumen solas.
+
 ### Validaciones
 
 - Category: `nombre` 3–100 caracteres.
@@ -83,4 +100,4 @@ Autogenerate no detecta renombres de columna: revisar siempre el archivo antes d
 ## Pendiente
 
 - Borrar una categoría con productos, o crear/actualizar un producto con `category_id` inexistente, falla por la FK (500).
-- Sin `relationship()` entre modelos y sin tests.
+- Sin `relationship()` entre modelos.
