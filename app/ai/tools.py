@@ -3,7 +3,6 @@ import re
 from langchain.tools import tool
 from sqlalchemy import inspect, text
 
-from app.ai.llm import llm
 from db import engine
 
 TABLAS_PERMITIDAS = {"categories", "products"}
@@ -59,19 +58,6 @@ def ver_esquema(tablas: str) -> str:
         )
         salida.append(f"{t}({cols})" + (f"\n  relaciones: {fks}" if fks else ""))
     return "\n".join(salida)
-
-
-@tool
-def revisar_sql(sql: str) -> str:
-    """Revisa una consulta antes de ejecutarla. Úsala siempre antes de consultar_sql."""
-    prompt = f"""{sql}
-Revisa la consulta SQL de arriba buscando errores comunes: NOT IN con NULL,
-UNION en lugar de UNION ALL, joins con columnas incorrectas, tipos de datos
-incompatibles, identificadores mal escritos.
-Si hay errores, reescríbela; si no, repítela igual.
-Responde solo con la consulta SQL final, sin explicaciones."""
-    out = llm.invoke(prompt).content.strip()
-    return re.sub(r"```(?:sql)?", "", out).strip()
 
 
 @tool
