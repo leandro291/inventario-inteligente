@@ -15,6 +15,11 @@ def test_mensaje_usuario_con_y_sin_contexto():
     assert chat.mensaje_usuario("¿Cuáles?", "") == "¿Cuáles?"
 
 
+def test_mensaje_usuario_contexto_en_blanco_es_ausente():
+    assert chat.mensaje_usuario("¿Cuáles?", "   ") == "¿Cuáles?"
+    assert chat.mensaje_usuario("¿Cuáles?", "  Inicio ") == "[Contexto: Inicio]\n¿Cuáles?"
+
+
 def test_evento_sse():
     assert chat.evento_sse("token", {"texto": "año"}) == 'event: token\ndata: {"texto": "año"}\n\n'
 
@@ -58,6 +63,21 @@ def test_stream_emite_tokens_sugerencias_y_fin(fake_agent, fake_sugerir):
     assert fake_agent.calls[0][2] == "messages"
 
 
+def test_stream_separa_mensajes_distintos_del_modelo(fake_agent, fake_sugerir):
+    fake_agent.chunks = [
+        (AIMessageChunk(content="Voy a ", id="m1"), MODEL),
+        (AIMessageChunk(content="mirar.", id="m1"), MODEL),
+        (AIMessageChunk(content="Hay 3", id="m2"), MODEL),
+    ]
+
+    eventos = parse_sse("".join(chat.responder_stream("¿Cuántos?", "t1")))
+
+    assert [d["texto"] for n, d in eventos if n == "token"] == [
+        "Voy a ", "mirar.", "\n\n", "Hay 3",
+    ]
+    assert fake_sugerir.calls == [("¿Cuántos?", "Voy a mirar.\n\nHay 3")]
+
+
 def test_stream_error_a_mitad(fake_agent, fake_sugerir):
     fake_agent.chunks = [(AIMessageChunk(content="Hay "), MODEL), RuntimeError("boom")]
 
@@ -73,3 +93,11 @@ def test_stream_error_a_mitad(fake_agent, fake_sugerir):
 def test_borrar_conversacion(fake_agent):
     chat.borrar_conversacion("t1")
     assert fake_agent.checkpointer.deleted == ["t1"]
+
+
+def test_borrar_conversacion_tolera_keyerror(fake_agent):
+    def delete_thread(thread_id):
+        raise KeyError(thread_id)
+
+    fake_agent.checkpointer.delete_thread = delete_thread
+    chat.borrar_conversacion("t1")  # no lanza

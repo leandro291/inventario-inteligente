@@ -39,10 +39,13 @@ def test_sugerencias_vacias_no_es_error(client, fake_sugerir):
     assert r.json()["sugerencias"] == []
 
 
-def test_agente_falla_es_502(client, fake_agent):
+def test_agente_falla_es_502(client, fake_agent, caplog):
     fake_agent.error = RuntimeError("boom")
     r = client.post("/ai/preguntar", json=BODY)
     assert r.status_code == 502
+    assert any(
+        rec.exc_info and rec.exc_info[1] is fake_agent.error for rec in caplog.records
+    )
     assert r.json() == {"detail": "Falló el agente, intenta de nuevo"}
 
 
@@ -68,3 +71,7 @@ def test_borrar_conversacion_idempotente(client, fake_agent):
 
 def test_borrar_conversacion_id_largo_es_422(client):
     assert client.delete("/ai/conversaciones/" + "x" * 101).status_code == 422
+
+
+def test_borrar_conversacion_id_en_blanco_es_422(client):
+    assert client.delete("/ai/conversaciones/%20%20").status_code == 422

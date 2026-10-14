@@ -32,10 +32,15 @@ Formato de la respuesta (se muestra como markdown):
 - Pon en **negrita** el dato clave.
 - Montos con formato argentino: $1.234,50. Cantidades con punto de miles: 1.250.
 - Al nombrar un producto, enlázalo así: [nombre](/products?q=nombre).
+  Los espacios del enlace van como %20: [Coca Cola](/products?q=Coca%20Cola).
   Al nombrar una categoría: [nombre](/products?category=id).
   Usa solo esas rutas; nunca enlaces externos.
 - Si la pregunta empieza con [Contexto: ...], úsalo para interpretar referencias
   como "estos" o "esta categoría"."""
+
+# on_failure="error": agotados los reintentos se propaga la excepción (el default
+# "continue" devolvería el error del proveedor como si fuera la respuesta)
+MODEL_RETRY = ModelRetryMiddleware(max_retries=3, on_failure="error")
 
 agent = create_agent(
     llm,
@@ -47,7 +52,7 @@ agent = create_agent(
             trigger=("tokens", SUMMARY_TRIGGER_TOKENS),
             keep=("messages", SUMMARY_KEEP_MESSAGES),
         ),
-        ModelRetryMiddleware(max_retries=3),
+        MODEL_RETRY,
     ],
     checkpointer=InMemorySaver(),
 )

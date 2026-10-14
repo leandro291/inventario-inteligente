@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def mensaje_usuario(pregunta: str, contexto: str | None) -> str:
+    contexto = (contexto or "").strip()
     return f"[Contexto: {contexto}]\n{pregunta}" if contexto else pregunta
 
 
@@ -40,7 +41,11 @@ def responder_stream(
     pregunta: str, thread_id: str, contexto: str | None = None
 ) -> Iterator[str]:
     """Eventos SSE: token... → sugerencias → fin, o error si el agente falla."""
+    # ponytail: si ModelRetryMiddleware reintenta tras emitir tokens, los del intento
+    # fallido quedan en el stream. Upgrade: evento "reinicio" al detectar un chunk.id
+    # nuevo sin tool_call_chunks.
     partes: list[str] = []
+    ultimo_id = None
     try:
         for chunk, metadata in agent.stream(
             _entrada(pregunta, contexto),
@@ -54,6 +59,11 @@ def responder_stream(
                 continue
             if not isinstance(chunk.content, str) or not chunk.content:
                 continue
+            # Otro mensaje del modelo (p. ej. tras una tool): separa los párrafos
+            if partes and chunk.id != ultimo_id:
+                partes.append("\n\n")
+                yield evento_sse("token", {"texto": "\n\n"})
+            ultimo_id = chunk.id
             partes.append(chunk.content)
             yield evento_sse("token", {"texto": chunk.content})
     except Exception:
@@ -65,4 +75,7 @@ def responder_stream(
 
 
 def borrar_conversacion(thread_id: str) -> None:
-    agent.checkpointer.delete_thread(thread_id)
+    try:
+        agent.checkpointer.delete_thread(thread_id)
+    except KeyError:  # InMemorySaver no es atómico: doble borrado concurrente
+        pass
