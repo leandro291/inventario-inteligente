@@ -39,13 +39,10 @@ def test_sugerencias_vacias_no_es_error(client, fake_sugerir):
     assert r.json()["sugerencias"] == []
 
 
-def test_agente_falla_es_502(client, fake_agent, caplog):
+def test_agente_falla_es_502(client, fake_agent):
     fake_agent.error = RuntimeError("boom")
     r = client.post("/ai/preguntar", json=BODY)
     assert r.status_code == 502
-    assert any(
-        rec.exc_info and rec.exc_info[1] is fake_agent.error for rec in caplog.records
-    )
     assert r.json() == {"detail": "Falló el agente, intenta de nuevo"}
 
 

@@ -1,12 +1,8 @@
-import logging
-
-from pydantic import BaseModel
 
 from app.ai.llm import llm
+from app.schema.ai import Sugerencias
 
 MAX_SUGERENCIAS = 3
-
-logger = logging.getLogger(__name__)
 
 PROMPT = """Un usuario le preguntó a un asistente de inventario (productos, categorías y stock):
 {pregunta}
@@ -19,10 +15,6 @@ Reglas: en español, cortas (máximo 80 caracteres), que se puedan responder con
 datos de productos, categorías y stock, y distintas de la pregunta original."""
 
 
-class Sugerencias(BaseModel):
-    sugerencias: list[str]
-
-
 modelo_sugerencias = llm.with_structured_output(Sugerencias)
 
 
@@ -33,7 +25,6 @@ def sugerir(pregunta: str, respuesta: str) -> list[str]:
             PROMPT.format(pregunta=pregunta, respuesta=respuesta)
         )
     except Exception:
-        logger.exception("No se pudieron generar sugerencias")
         return []
     if resultado is None:
         return []

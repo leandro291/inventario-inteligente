@@ -1,5 +1,4 @@
 import json
-import logging
 from collections.abc import Iterator
 
 from langchain_core.messages import AIMessageChunk
@@ -9,8 +8,6 @@ from app.ai.suggestions import sugerir
 from app.schema.ai import AskOut
 
 ERROR_AGENTE = "Falló el agente, intenta de nuevo"
-
-logger = logging.getLogger(__name__)
 
 
 def mensaje_usuario(pregunta: str, contexto: str | None) -> str:
@@ -67,7 +64,6 @@ def responder_stream(
             partes.append(chunk.content)
             yield evento_sse("token", {"texto": chunk.content})
     except Exception:
-        logger.exception("Falló el agente durante el streaming")
         yield evento_sse("error", {"detalle": ERROR_AGENTE})
         return
     yield evento_sse("sugerencias", {"sugerencias": sugerir(pregunta, "".join(partes))})

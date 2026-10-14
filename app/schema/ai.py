@@ -11,3 +11,7 @@ class AskIn(BaseModel):
 class AskOut(BaseModel):
     respuesta: str
     sugerencias: list[str] = Field(default_factory=list)
+
+
+class Sugerencias(BaseModel):
+    sugerencias: list[str]
